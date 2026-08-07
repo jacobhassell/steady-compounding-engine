@@ -120,7 +120,7 @@ class ScannerEngine:
         started = datetime.now(timezone.utc)
         open_ex = [e.code for e in ex.open_exchanges(at)]
         soon = [e.code for e in ex.opening_soon(30, at)]
-        targets = list(universes) if universes is not None else self.active_universes(at)
+        targets = self._apply_crypto_gate(list(universes)) if universes is not None else self.active_universes(at)
 
         if not targets:
             log.info("All supported exchanges closed. Sleeping instead of burning API requests.")
