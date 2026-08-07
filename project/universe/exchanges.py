@@ -52,15 +52,30 @@ class Exchange:
 
 
 EXCHANGES: Dict[str, Exchange] = {
+    # --- North America ---
     "NYSE": Exchange("NYSE", "New York Stock Exchange", "US", "America/New_York", time(9, 30), time(16, 0)),
     "NASDAQ": Exchange("NASDAQ", "Nasdaq", "US", "America/New_York", time(9, 30), time(16, 0)),
     "AMEX": Exchange("AMEX", "NYSE American", "US", "America/New_York", time(9, 30), time(16, 0)),
     "TSX": Exchange("TSX", "Toronto Stock Exchange", "CA", "America/Toronto", time(9, 30), time(16, 0), suffix=".TO"),
+    # --- Nordics ---
+    "STO": Exchange("STO", "Nasdaq Stockholm", "SE", "Europe/Stockholm", time(9, 0), time(17, 30), suffix=".ST"),
+    "OSL": Exchange("OSL", "Oslo Bors", "NO", "Europe/Oslo", time(9, 0), time(16, 20), suffix=".OL"),
+    "CPH": Exchange("CPH", "Nasdaq Copenhagen", "DK", "Europe/Copenhagen", time(9, 0), time(16, 55), suffix=".CO"),
+    "HEL": Exchange("HEL", "Nasdaq Helsinki", "FI", "Europe/Helsinki", time(10, 0), time(18, 30), suffix=".HE"),
+    # --- Rest of Europe ---
+    "FRA": Exchange("FRA", "Deutsche Boerse Xetra", "DE", "Europe/Berlin", time(9, 0), time(17, 30), suffix=".DE"),
+    "LSE": Exchange("LSE", "London Stock Exchange", "UK", "Europe/London", time(8, 0), time(16, 30), suffix=".L"),
+    # --- Asia-Pacific ---
     "ASX": Exchange("ASX", "Australian Securities Exchange", "AU", "Australia/Sydney", time(10, 0), time(16, 0), suffix=".AX"),
     "NZX": Exchange("NZX", "New Zealand Exchange", "NZ", "Pacific/Auckland", time(10, 0), time(16, 45), suffix=".NZ"),
-    "LSE": Exchange("LSE", "London Stock Exchange", "UK", "Europe/London", time(8, 0), time(16, 30), suffix=".L"),
+    "TSE": Exchange("TSE", "Tokyo Stock Exchange", "JP", "Asia/Tokyo", time(9, 0), time(15, 0), suffix=".T"),
+    "HKEX": Exchange("HKEX", "Hong Kong Exchange", "HK", "Asia/Hong_Kong", time(9, 30), time(16, 0), suffix=".HK"),
+    # --- Round-the-clock / continuous venues ---
+    "FOREX": Exchange("FOREX", "FX Interbank (24/5)", "GLOBAL", "UTC", time(0, 0), time(23, 59), suffix="=X"),
+    "GLOBEX": Exchange("GLOBEX", "CME Globex Futures (23/5)", "US", "America/Chicago", time(0, 0), time(23, 55), suffix="=F"),
     "CRYPTO": Exchange("CRYPTO", "Crypto (24/7)", "GLOBAL", "UTC", time(0, 0), time(23, 59), weekdays=(0, 1, 2, 3, 4, 5, 6), always_open=True),
 }
+
 
 
 def open_exchanges(at: Optional[datetime] = None) -> List[Exchange]:
