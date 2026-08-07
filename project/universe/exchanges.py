@@ -72,7 +72,7 @@ EXCHANGES: Dict[str, Exchange] = {
     "HKEX": Exchange("HKEX", "Hong Kong Exchange", "HK", "Asia/Hong_Kong", time(9, 30), time(16, 0), suffix=".HK"),
     # --- Round-the-clock / continuous venues ---
     "FOREX": Exchange("FOREX", "FX Interbank (24/5)", "GLOBAL", "UTC", time(0, 0), time(23, 59), suffix="=X"),
-    "GLOBEX": Exchange("GLOBEX", "CME Globex Futures (23/5)", "US", "America/Chicago", time(0, 0), time(23, 55), suffix="=F"),
+    "GLOBEX": Exchange("GLOBEX", "CME Globex Futures (23/5)", "US", "UTC", time(0, 0), time(23, 55), suffix="=F"),
     "CRYPTO": Exchange("CRYPTO", "Crypto (24/7)", "GLOBAL", "UTC", time(0, 0), time(23, 59), weekdays=(0, 1, 2, 3, 4, 5, 6), always_open=True),
 }
 
