@@ -245,3 +245,22 @@ def test_daily_loss_limit_halts_new_risk():
     state = PortfolioState(100_000, 100_000, realized_today=-4_000)
     allowed, why = risk.can_open(state, "Tech", "US", "AAPL")
     assert not allowed and "daily loss" in why
+
+
+# --- crypto risk gate -------------------------------------------------------------
+
+def test_crypto_suppressed_when_many_securities_active():
+    from project.universe.registry import UNIVERSES
+    engine = make_engine()
+    busy = [UNIVERSES["US_TECH"], UNIVERSES["CRYPTO"]]
+    allowed, active = engine.crypto_allowed(busy)
+    assert not allowed and active > 25
+    assert all(u.asset_class != "crypto" for u in engine._apply_crypto_gate(busy))
+
+
+def test_crypto_allowed_in_thin_hours():
+    from project.universe.registry import UNIVERSES
+    engine = make_engine()
+    thin = [UNIVERSES["CRYPTO"]]
+    allowed, active = engine.crypto_allowed(thin)
+    assert allowed and active == 0
