@@ -87,6 +87,10 @@ class ScanConfig:
     min_price: float = 2.0
     min_avg_dollar_volume: float = 1_000_000.0
     history_bars: int = 260
+    # Crypto is only permitted in genuinely thin hours. If more than this many
+    # non-crypto securities are tradeable right now, crypto is excluded from the scan.
+    crypto_max_active_securities: int = 25
+
 
 
 @dataclass(frozen=True)
