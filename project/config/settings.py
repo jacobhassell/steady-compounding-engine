@@ -87,6 +87,10 @@ class ScanConfig:
     min_price: float = 2.0
     min_avg_dollar_volume: float = 1_000_000.0
     history_bars: int = 260
+    # Crypto is only permitted in genuinely thin hours. If more than this many
+    # non-crypto securities are tradeable right now, crypto is excluded from the scan.
+    crypto_max_active_securities: int = 25
+
 
 
 @dataclass(frozen=True)
@@ -105,7 +109,11 @@ class Settings:
     starting_cash: float = 100_000.0
     base_currency: str = "USD"
     mode: str = "paper"                        # paper | live | backtest
-    universes: List[str] = field(default_factory=lambda: ["SP500", "NASDAQ100", "TSX60", "ASX200", "NZX50", "CRYPTO"])
+    universes: List[str] = field(default_factory=lambda: [
+        "US_LARGE", "US_TECH", "TSX", "STOCKHOLM", "OSLO", "COPENHAGEN", "HELSINKI",
+        "FRANKFURT", "LSE", "ASX", "NZX", "TOKYO", "HONGKONG",
+        "BONDS", "FOREX", "FUTURES", "CRYPTO",
+    ])
     weights: ScoreWeights = field(default_factory=ScoreWeights)
     indicators: IndicatorConfig = field(default_factory=IndicatorConfig)
     risk: RiskConfig = field(default_factory=RiskConfig)

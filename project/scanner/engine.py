@@ -72,7 +72,31 @@ class ScannerEngine:
         open_codes = [e.code for e in ex.open_exchanges(at)]
         if not open_codes:
             return []
-        return universes_for_exchanges(open_codes)
+        return self._apply_crypto_gate(universes_for_exchanges(open_codes))
+
+    # -- crypto risk gate ----------------------------------------------------------
+    def crypto_allowed(self, universes: Sequence[Universe]) -> tuple[bool, int]:
+        """Crypto only trades in thin hours.
+
+        Counts securities tradeable right now outside crypto. Above the configured
+        ceiling the session is 'busy' — risk budget belongs to regulated venues, so
+        crypto is dropped from the scan entirely.
+        """
+        active = sum(len(u.symbols) for u in universes if u.asset_class != "crypto")
+        return active <= self.settings.scan.crypto_max_active_securities, active
+
+    def _apply_crypto_gate(self, universes: List[Universe]) -> List[Universe]:
+        allowed, active = self.crypto_allowed(universes)
+        if allowed:
+            return universes
+        dropped = [u for u in universes if u.asset_class == "crypto"]
+        if dropped:
+            log.info(
+                "Crypto suppressed: %d active non-crypto securities exceeds ceiling of %d.",
+                active, self.settings.scan.crypto_max_active_securities,
+            )
+        return [u for u in universes if u.asset_class != "crypto"]
+
 
     def sleep_seconds(self, at: Optional[datetime] = None) -> float:
         if ex.open_exchanges(at):
@@ -96,7 +120,7 @@ class ScannerEngine:
         started = datetime.now(timezone.utc)
         open_ex = [e.code for e in ex.open_exchanges(at)]
         soon = [e.code for e in ex.opening_soon(30, at)]
-        targets = list(universes) if universes is not None else self.active_universes(at)
+        targets = self._apply_crypto_gate(list(universes)) if universes is not None else self.active_universes(at)
 
         if not targets:
             log.info("All supported exchanges closed. Sleeping instead of burning API requests.")

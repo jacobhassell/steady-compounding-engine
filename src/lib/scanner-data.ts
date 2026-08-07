@@ -161,11 +161,21 @@ export const EXCHANGES: ExchangeStatus[] = [
   { code: "NASDAQ", label: "Nasdaq", state: "open", detail: "closes 16:00 ET" },
   { code: "AMEX", label: "NYSE American", state: "open", detail: "closes 16:00 ET" },
   { code: "TSX", label: "Toronto", state: "open", detail: "closes 16:00 ET" },
+  { code: "STO", label: "Stockholm", state: "closed", detail: "opens in 14h 18m" },
+  { code: "OSL", label: "Oslo", state: "closed", detail: "opens in 14h 18m" },
+  { code: "CPH", label: "Copenhagen", state: "closed", detail: "opens in 14h 18m" },
+  { code: "HEL", label: "Helsinki", state: "closed", detail: "opens in 14h 18m" },
+  { code: "FRA", label: "Frankfurt", state: "closed", detail: "opens in 14h 18m" },
   { code: "LSE", label: "London", state: "closed", detail: "opens in 13h 42m" },
+  { code: "TSE", label: "Tokyo", state: "soon", detail: "opens in 26m" },
+  { code: "HKEX", label: "Hong Kong", state: "closed", detail: "opens in 1h 56m" },
   { code: "ASX", label: "Sydney", state: "soon", detail: "opens in 24m" },
   { code: "NZX", label: "New Zealand", state: "soon", detail: "opens in 26m" },
-  { code: "CRYPTO", label: "Crypto", state: "open", detail: "24/7 session" },
+  { code: "FOREX", label: "FX 24/5", state: "open", detail: "continuous" },
+  { code: "GLOBEX", label: "Futures", state: "open", detail: "23/5 session" },
+  { code: "CRYPTO", label: "Crypto", state: "closed", detail: "suppressed — 466 active" },
 ];
+
 
 export type JournalEntry = { time: string; level: "info" | "trade" | "risk" | "warn"; message: string };
 
