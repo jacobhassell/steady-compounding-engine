@@ -8,8 +8,8 @@ from project.config.settings import RiskConfig, ScanConfig
 from project.portfolio.position import ManagedPosition, MastermindPositionManager, Stage
 
 
-def bar(mgr, pos, day, high, low, close, atr=None, score=None):
-    return mgr.on_bar(pos, day=day, high=high, low=low, close=close, atr=atr, score=score)
+def bar(mgr, pos, day, high, low, close, atr=None, score=None, open_=None):
+    return mgr.on_bar(pos, day=day, high=high, low=low, close=close, open_=open_, atr=atr, score=score)
 
 
 class PositionGeometryTests(unittest.TestCase):
@@ -108,6 +108,13 @@ class LossAndExitTests(unittest.TestCase):
         bar(mgr, pos, 5, 101.0, 99.0, 100.5, atr=2.0)
         self.assertFalse(pos.is_open)
         self.assertIn("max holding period", pos.exit_reason or "")
+
+    def test_gap_through_stop_fills_at_the_open(self):
+        pos = self.mgr.open_position("TEST", 100.0, 90.0, 100)
+        a = bar(self.mgr, pos, 1, high=86.0, low=84.0, close=85.0, open_=85.5, atr=3.0)
+        self.assertTrue(a.closed)
+        self.assertAlmostEqual(pos.realized_pnl, -1450.0)
+        self.assertIn("gapped through", pos.exit_reason or "")
 
     def test_closed_position_ignores_further_bars(self):
         pos = self.mgr.open_position("TEST", 100.0, 90.0, 100)

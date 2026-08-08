@@ -74,9 +74,34 @@ def run_forever(settings: Settings) -> None:
         time.sleep(max(5.0, sleep_for))
 
 
+def run_backtest(settings: Settings, tickers: list[str], bars: int) -> None:
+    """Historical validation using the same scoring, risk and position code as live."""
+    from project.backtests.engine import BacktestConfig, Backtester
+
+    provider = build_engine(settings).provider
+    history = {}
+    for ticker in tickers:
+        data = provider.fetch(ticker, bars)
+        if data is not None and len(data) > 120:
+            history[ticker] = data
+        else:
+            log.warning("Skipping %s — not enough history to test honestly.", ticker)
+    if not history:
+        log.error("No usable history. Nothing to backtest.")
+        return
+
+    result = Backtester(settings, BacktestConfig()).run(history)
+    log.info("Backtested %d symbols over %d bars.", result.symbols_tested, result.bars_tested)
+    print(result.summary())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Mastermind algorithmic trading platform")
-    parser.add_argument("command", choices=["scan", "run"], help="scan = single cycle, run = continuous")
+    parser.add_argument("command", choices=["scan", "run", "backtest"],
+                        help="scan = single cycle, run = continuous, backtest = historical validation")
+    parser.add_argument("--tickers", default="AAPL,MSFT,NVDA,JPM,XOM,VOLV-B.ST",
+                        help="comma-separated symbols for backtest")
+    parser.add_argument("--bars", type=int, default=500, help="history length for backtest")
     parser.add_argument("--mode", default="paper", choices=["paper", "live", "backtest"])
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()
@@ -88,6 +113,8 @@ def main() -> None:
     log.info("Mastermind starting in %s mode. Capital preservation first.", settings.mode)
     if args.command == "scan":
         run_once(settings)
+    elif args.command == "backtest":
+        run_backtest(settings, [t.strip() for t in args.tickers.split(",") if t.strip()], args.bars)
     else:
         run_forever(settings)
 
