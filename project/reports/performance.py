@@ -118,7 +118,10 @@ def sortino_ratio(returns: Sequence[float], risk_free: float = 0.0) -> float:
     mean = sum(returns) / len(returns) - target
     downside = [min(0.0, r - target) ** 2 for r in returns]
     dd = sqrt(sum(downside) / len(returns))
-    return (mean / dd) * sqrt(TRADING_DAYS) if dd else 0.0
+    if dd == 0.0:
+        # No losing bar in the sample: undefined downside risk, not zero performance.
+        return float("inf") if mean > 0 else 0.0
+    return (mean / dd) * sqrt(TRADING_DAYS)
 
 
 def annualized_volatility(returns: Sequence[float]) -> float:
