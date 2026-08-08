@@ -178,6 +178,7 @@ class MastermindPositionManager:
         high: float,
         low: float,
         close: float,
+        open_: Optional[float] = None,
         atr: Optional[float] = None,
         score: Optional[float] = None,
     ) -> ManagementAction:
@@ -190,12 +191,17 @@ class MastermindPositionManager:
 
         # 1. Stop always evaluated first — a gap through the stop is not a winner.
         if low <= pos.stop:
-            fill = min(pos.stop, high if high < pos.stop else pos.stop)
-            pos.close(fill, day, f"stop hit at {pos.stop:.2f}")
+            gapped = open_ is not None and open_ < pos.stop
+            fill = min(open_, pos.stop) if gapped else pos.stop
+            reason = (f"stop gapped through at {fill:.2f} (stop was {pos.stop:.2f})"
+                      if gapped else f"stop hit at {pos.stop:.2f}")
+            r = pos.r_multiple(fill)
+            pos.close(fill, day, reason)
             action.closed = True
             action.stage = pos.stage
-            action.notes.append(f"stopped out at {fill:.2f} ({pos.r_multiple(fill):+.2f}R)")
+            action.notes.append(f"stopped out at {fill:.2f} ({r:+.2f}R)")
             return action
+
 
         pos.highest_close = max(pos.highest_close, close)
 
