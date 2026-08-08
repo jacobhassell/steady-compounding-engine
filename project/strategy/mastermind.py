@@ -97,7 +97,7 @@ if BACKTRADER_AVAILABLE:  # pragma: no cover - requires the optional dependency
                     action = self.manager.on_bar(
                         pos, day=self.bar_index,
                         high=float(data.high[0]), low=float(data.low[0]),
-                        close=float(data.close[0]), atr=atr, score=self._bar_score(data),
+                        close=float(data.close[0]), open_=float(data.open[0]), atr=atr, score=self._bar_score(data),
                     )
                     if action.closed:
                         self.close(data=data)

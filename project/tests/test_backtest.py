@@ -131,10 +131,12 @@ class BacktesterTests(unittest.TestCase):
             self.assertGreaterEqual(t.exit_day, t.entry_day)
 
     def test_losses_are_bounded_by_risk_config(self):
-        """No single closed trade may lose materially more than 1R of planned risk."""
+        """Only an overnight gap may take a trade beyond its planned 1R of risk."""
         res = self.bt.run(self.history)
         for t in res.trades:
-            self.assertGreater(t.r_multiple, -1.6, f"{t.ticker} lost {t.r_multiple:.2f}R")
+            if "gapped" in t.reason:
+                continue
+            self.assertGreater(t.r_multiple, -1.2, f"{t.ticker} lost {t.r_multiple:.2f}R")
 
     def test_rejects_history_that_is_too_short(self):
         with self.assertRaises(ValueError):

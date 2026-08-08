@@ -125,7 +125,8 @@ class Backtester:
                 before = pos.remaining
                 action = self.manager.on_bar(
                     pos, day=day, high=bars.highs[day], low=bars.lows[day],
-                    close=bars.closes[day], atr=snap.atr, score=score,
+                    close=bars.closes[day], open_=bars.opens[day],
+                    atr=snap.atr, score=score,
                 )
                 sold = before - pos.remaining
                 if sold > 0:
