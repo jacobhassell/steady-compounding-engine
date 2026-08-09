@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { BacktestPanel } from "@/components/dashboard/BacktestPanel";
 import { CandidateTable } from "@/components/dashboard/CandidateTable";
 import { ExchangeStrip } from "@/components/dashboard/ExchangeStrip";
 import { JournalFeed } from "@/components/dashboard/JournalFeed";
@@ -63,7 +64,9 @@ function Dashboard() {
         <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="space-y-3">
             <CandidateTable />
+            <BacktestPanel />
             <JournalFeed />
+
           </div>
           <div className="space-y-3">
             <PositionsPanel />

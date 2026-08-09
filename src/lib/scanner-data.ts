@@ -192,3 +192,51 @@ export const JOURNAL: JournalEntry[] = [
   { time: "15:43:08", level: "risk", message: "ETH-USD score decayed 71 → 52. Tightening stop, preparing exit." },
   { time: "15:43:09", level: "info", message: "Portfolio heat 2.8% of 6.0% ceiling. 5 of 10 positions open. Next scan in 5m." },
 ];
+
+/** Backtest view model — mirrors project/backtests/engine.py BacktestResult + reports/performance.py */
+export type BacktestTrade = {
+  ticker: string;
+  entry: number;
+  exit: number;
+  shares: number;
+  pnl: number;
+  r: number;
+  heldDays: number;
+  reason: string;
+};
+
+export const BACKTEST = {
+  label: "SP500 + Nordic core · 1,260 bars · 2021-2026",
+  symbolsTested: 517,
+  barsTested: 1_200,
+  startEquity: 100_000,
+  endEquity: 241_830,
+  cagr: 19.3,
+  sharpe: 1.71,
+  sortino: 2.28,
+  maxDrawdown: -12.8,
+  maxDdDays: 74,
+  profitFactor: 2.04,
+  winRate: 46.9,
+  expectancy: 0.31,
+  exposurePct: 61.4,
+  verdict:
+    "Viable — risk-adjusted return clears the 1.0 Sharpe floor with drawdown inside the 15% capital-preservation ceiling.",
+  // 40 sampled points of the equity curve, in thousands
+  curve: [
+    100, 101, 99, 103, 106, 105, 109, 112, 110, 115, 119, 117, 122, 128, 126, 131,
+    129, 124, 130, 136, 141, 138, 145, 152, 149, 156, 162, 158, 166, 173, 170, 179,
+    186, 181, 190, 199, 205, 214, 229, 242,
+  ],
+} as const;
+
+export const BACKTEST_TRADES: BacktestTrade[] = [
+  { ticker: "NVDA", entry: 121.4, exit: 178.9, shares: 82, pnl: 4_715, r: 3.41, heldDays: 46, reason: "trailing stop 3.0x ATR" },
+  { ticker: "VOLV-B.ST", entry: 268.2, exit: 301.5, shares: 190, pnl: 6_327, r: 1.88, heldDays: 33, reason: "trailing stop 3.0x ATR" },
+  { ticker: "SHOP", entry: 74.8, exit: 96.2, shares: 210, pnl: 4_494, r: 2.60, heldDays: 51, reason: "score collapse exit" },
+  { ticker: "EQNR.OL", entry: 302.0, exit: 288.4, shares: 145, pnl: -1_972, r: -0.92, heldDays: 12, reason: "stop hit at 288.40" },
+  { ticker: "MSFT", entry: 401.7, exit: 401.7, shares: 41, pnl: 0, r: 0.0, heldDays: 21, reason: "breakeven stop after +1R partial" },
+  { ticker: "SAP.DE", entry: 188.3, exit: 212.9, shares: 130, pnl: 3_198, r: 2.11, heldDays: 39, reason: "trailing stop 3.0x ATR" },
+  { ticker: "CAT", entry: 344.1, exit: 322.6, shares: 55, pnl: -1_182, r: -1.00, heldDays: 8, reason: "gapped through stop at open" },
+  { ticker: "NOVO-B.CO", entry: 612.5, exit: 688.0, shares: 60, pnl: 4_530, r: 1.74, heldDays: 44, reason: "max holding period reached" },
+];
