@@ -95,12 +95,38 @@ def run_backtest(settings: Settings, tickers: list[str], bars: int) -> None:
     print(result.summary())
 
 
+def run_paper(settings: Settings, cycles: int) -> None:
+    """Paper trade with the production scanner, risk stack and Mastermind ladder."""
+    from project.paper.trader import PaperTrader
+
+    trader = PaperTrader(build_engine(settings), settings)
+    completed = 0
+    while cycles <= 0 or completed < cycles:
+        try:
+            report = trader.run_cycle()
+            print(report.summary())
+        except KeyboardInterrupt:
+            log.info("Shutdown requested. Paper state saved.")
+            trader.save()
+            return
+        except Exception as exc:  # noqa: BLE001 — the loop must survive transient faults
+            log.exception("Paper cycle failed, continuing after backoff: %s", exc)
+        completed += 1
+        if cycles <= 0 or completed < cycles:
+            sleep_for = trader.engine.sleep_seconds()
+            log.info("Sleeping %.0fs until the next paper cycle.", sleep_for)
+            time.sleep(max(5.0, sleep_for))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Mastermind algorithmic trading platform")
-    parser.add_argument("command", choices=["scan", "run", "backtest"],
-                        help="scan = single cycle, run = continuous, backtest = historical validation")
+    parser.add_argument("command", choices=["scan", "run", "backtest", "paper"],
+                        help="scan = single cycle, run = continuous, "
+                             "backtest = historical validation, paper = simulated trading")
     parser.add_argument("--tickers", default="AAPL,MSFT,NVDA,JPM,XOM,VOLV-B.ST",
                         help="comma-separated symbols for backtest")
+    parser.add_argument("--cycles", type=int, default=1,
+                        help="paper trading cycles to run; 0 = forever")
     parser.add_argument("--bars", type=int, default=500, help="history length for backtest")
     parser.add_argument("--mode", default="paper", choices=["paper", "live", "backtest"])
     parser.add_argument("--log-level", default="INFO")
@@ -113,6 +139,8 @@ def main() -> None:
     log.info("Mastermind starting in %s mode. Capital preservation first.", settings.mode)
     if args.command == "scan":
         run_once(settings)
+    elif args.command == "paper":
+        run_paper(settings, args.cycles)
     elif args.command == "backtest":
         run_backtest(settings, [t.strip() for t in args.tickers.split(",") if t.strip()], args.bars)
     else:
