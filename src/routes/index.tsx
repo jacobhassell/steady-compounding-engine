@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { BacktestPanel } from "@/components/dashboard/BacktestPanel";
 import { CandidateTable } from "@/components/dashboard/CandidateTable";
 import { ExchangeStrip } from "@/components/dashboard/ExchangeStrip";
 import { JournalFeed } from "@/components/dashboard/JournalFeed";
