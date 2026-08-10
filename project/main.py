@@ -118,17 +118,91 @@ def run_paper(settings: Settings, cycles: int) -> None:
             time.sleep(max(5.0, sleep_for))
 
 
+def run_optimize(settings: Settings, tickers: list[str], bars: int, folds: int,
+                 train: int, test: int) -> None:
+    """Walk-forward parameter validation. Optimise on the past, score only the future."""
+    from project.optimization.walkforward import DEFAULT_GRID, Optimizer
+
+    provider = build_engine(settings).provider
+    history = {}
+    for ticker in tickers:
+        data = provider.fetch(ticker, bars)
+        if data is not None and len(data) >= train + test:
+            history[ticker] = data
+        else:
+            log.warning("Skipping %s — needs at least %d bars.", ticker, train + test)
+    if not history:
+        log.error("No usable history. Nothing to optimise.")
+        return
+
+    result = Optimizer(settings).walk_forward(
+        history, DEFAULT_GRID, folds=folds, train_bars=train, test_bars=test)
+    print(result.summary())
+    chosen = result.most_common_choice()
+    if chosen:
+        print("  most frequently selected: "
+              + ", ".join(f"{k}={v}" for k, v in chosen.items()))
+
+
+def run_live(settings: Settings, cycles: int, arm: bool, dry_run: bool) -> None:
+    """Live trading. Inert by default: dry run on, not armed, kill switch available."""
+    from project.live.trader import LiveTrader
+
+    settings = Settings(**{**settings.__dict__, "mode": "live"})
+    trader = LiveTrader(build_engine(settings), settings)
+    trader.guard.limits.dry_run = dry_run
+    if arm and not dry_run:
+        if not trader.arm("TRADE LIVE"):
+            log.error("Could not arm live trading. Aborting.")
+            return
+
+    check = trader.preflight()
+    print(check.summary())
+    if not check.passed:
+        log.error("Preflight failed — refusing to trade.")
+        return
+
+    completed = 0
+    while cycles <= 0 or completed < cycles:
+        try:
+            print(trader.run_cycle().summary())
+        except KeyboardInterrupt:
+            log.info("Shutdown requested. Disarming and saving state.")
+            trader.disarm()
+            trader.save()
+            return
+        except Exception as exc:  # noqa: BLE001 — never die mid-session with positions open
+            log.exception("Live cycle failed: %s", exc)
+            trader.kill(f"unhandled error: {exc}")
+            trader.save()
+            return
+        completed += 1
+        if cycles <= 0 or completed < cycles:
+            sleep_for = trader.engine.sleep_seconds()
+            log.info("Sleeping %.0fs until the next live cycle.", sleep_for)
+            time.sleep(max(5.0, sleep_for))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Mastermind algorithmic trading platform")
-    parser.add_argument("command", choices=["scan", "run", "backtest", "paper"],
+    parser.add_argument("command", choices=["scan", "run", "backtest", "paper", "optimize", "live"],
                         help="scan = single cycle, run = continuous, "
-                             "backtest = historical validation, paper = simulated trading")
+                             "backtest = historical validation, paper = simulated trading, "
+                             "optimize = walk-forward validation, live = guarded real trading")
     parser.add_argument("--tickers", default="AAPL,MSFT,NVDA,JPM,XOM,VOLV-B.ST",
                         help="comma-separated symbols for backtest")
     parser.add_argument("--cycles", type=int, default=1,
                         help="paper trading cycles to run; 0 = forever")
     parser.add_argument("--bars", type=int, default=500, help="history length for backtest")
     parser.add_argument("--mode", default="paper", choices=["paper", "live", "backtest"])
+    parser.add_argument("--folds", type=int, default=3, help="walk-forward folds")
+    parser.add_argument("--train", type=int, default=260, help="training bars per fold")
+    parser.add_argument("--test", type=int, default=65, help="out-of-sample bars per fold")
+    parser.add_argument("--arm", action="store_true",
+                        help="arm live trading (requires --no-dry-run)")
+    parser.add_argument("--no-dry-run", dest="dry_run", action="store_false",
+                        help="actually transmit orders; omit this and nothing is sent")
+    parser.set_defaults(dry_run=True)
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()
 
@@ -141,6 +215,11 @@ def main() -> None:
         run_once(settings)
     elif args.command == "paper":
         run_paper(settings, args.cycles)
+    elif args.command == "optimize":
+        run_optimize(settings, [t.strip() for t in args.tickers.split(",") if t.strip()],
+                     args.bars, args.folds, args.train, args.test)
+    elif args.command == "live":
+        run_live(settings, args.cycles, args.arm, args.dry_run)
     elif args.command == "backtest":
         run_backtest(settings, [t.strip() for t in args.tickers.split(",") if t.strip()], args.bars)
     else:
