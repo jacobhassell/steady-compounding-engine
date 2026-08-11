@@ -1,0 +1,32 @@
+[Unit]
+Description=Mastermind algorithmic trading bot (paper mode)
+Documentation=https://github.com/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mastermind
+Group=mastermind
+WorkingDirectory=/opt/mastermind
+Environment=PYTHONUNBUFFERED=1
+Environment=TZ=UTC
+ExecStart=/opt/mastermind/.venv/bin/python -m project.main paper --cycles 0
+Restart=always
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=60
+
+# Containment: the bot only needs its own directory and outbound HTTPS.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/mastermind
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mastermind
+
+[Install]
+WantedBy=multi-user.target
