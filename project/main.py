@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import logging
 import time
+from typing import Optional
+
 
 from project.config.settings import DEFAULT_SETTINGS, Settings
 from project.data.provider import ResilientProvider, build_provider
