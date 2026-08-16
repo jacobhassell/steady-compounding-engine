@@ -183,12 +183,20 @@ def run_live(settings: Settings, cycles: int, arm: bool, dry_run: bool) -> None:
             time.sleep(max(5.0, sleep_for))
 
 
+def run_trades(limit: int, ticker: Optional[str], verbose: bool) -> None:
+    """Print the full trade history: every fill, every closed round trip, every reason."""
+    from project.reports.ledger import TradeLedger
+
+    print(TradeLedger().report(limit=limit, ticker=ticker, verbose=verbose))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Mastermind algorithmic trading platform")
-    parser.add_argument("command", choices=["scan", "run", "backtest", "paper", "optimize", "live"],
+    parser.add_argument("command", choices=["scan", "run", "backtest", "paper", "optimize", "live", "trades"],
                         help="scan = single cycle, run = continuous, "
                              "backtest = historical validation, paper = simulated trading, "
-                             "optimize = walk-forward validation, live = guarded real trading")
+                             "optimize = walk-forward validation, live = guarded real trading, "
+                             "trades = full trade + fill history")
     parser.add_argument("--tickers", default="AAPL,MSFT,NVDA,JPM,XOM,VOLV-B.ST",
                         help="comma-separated symbols for backtest")
     parser.add_argument("--cycles", type=int, default=1,
@@ -203,6 +211,11 @@ def main() -> None:
     parser.add_argument("--no-dry-run", dest="dry_run", action="store_false",
                         help="actually transmit orders; omit this and nothing is sent")
     parser.set_defaults(dry_run=True)
+    parser.add_argument("--limit", type=int, default=50,
+                        help="rows to show for the trades command")
+    parser.add_argument("--ticker", default=None, help="filter the trades command to one symbol")
+    parser.add_argument("--verbose", action="store_true",
+                        help="trades command: include the per-bar decision trail")
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()
 
@@ -213,6 +226,8 @@ def main() -> None:
     log.info("Mastermind starting in %s mode. Capital preservation first.", settings.mode)
     if args.command == "scan":
         run_once(settings)
+    elif args.command == "trades":
+        run_trades(args.limit, args.ticker, args.verbose)
     elif args.command == "paper":
         run_paper(settings, args.cycles)
     elif args.command == "optimize":
