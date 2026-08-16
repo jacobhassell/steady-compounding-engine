@@ -16,6 +16,7 @@ from typing import Dict, List, Optional
 from project.config.settings import DEFAULT_SETTINGS, Settings
 from project.execution.broker import Order, PaperBroker, Side
 from project.portfolio.position import ManagedPosition, MastermindPositionManager
+from project.reports.ledger import TradeLedger
 from project.risk.manager import OpenPosition, PortfolioState, RiskManager
 from project.scanner.engine import ScannerEngine
 from project.scanner.scoring import ScoringEngine, build_snapshot
@@ -58,6 +59,7 @@ class PaperTrader:
         settings: Optional[Settings] = None,
         broker: Optional[PaperBroker] = None,
         state_path: str = ".state/paper_state.json",
+        ledger: Optional[TradeLedger] = None,
     ) -> None:
         self.settings = settings or DEFAULT_SETTINGS
         self.settings.validate()
@@ -70,6 +72,7 @@ class PaperTrader:
         self.closed: List[ManagedPosition] = []
         self.journal: List[str] = []
         self.state_path = state_path
+        self.ledger = ledger if ledger is not None else TradeLedger()
         self.cycles = 0
 
     # -- state -------------------------------------------------------------------
@@ -121,16 +124,19 @@ class PaperTrader:
             sold = before - pos.remaining
             if sold > 0:
                 reference = pos.stop if action.closed else snap.price
-                self.broker.submit(
+                exit_fill = self.broker.submit(
                     Order(ticker, Side.SELL, sold, reason=pos.exit_reason or "; ".join(action.notes)),
                     reference,
                 )
+                if exit_fill is not None:
+                    self.ledger.record_fill(exit_fill, self.broker.cash, self.cycles)
             if action.closed:
                 report.exits.append(
                     f"{ticker} — {pos.exit_reason} ({pos.realized_pnl:+,.0f}, "
                     f"{pos.realized_pnl / pos.risk_at_open if pos.risk_at_open else 0:+.2f}R)"
                 )
                 self._note(report, f"EXIT {ticker}: {pos.exit_reason}")
+                self.ledger.record_trade(pos, cycle_closed=self.cycles, closed_at=now)
                 self.closed.append(pos)
                 del self.positions[ticker]
             elif action.notes:
@@ -165,6 +171,7 @@ class PaperTrader:
                 if fill is None:
                     report.blocked.append(f"{candidate.ticker} — order rejected by broker")
                     continue
+                self.ledger.record_fill(fill, self.broker.cash, self.cycles)
                 pos = self.manager.open_position(
                     ticker=candidate.ticker, entry=fill.price, stop=sizing.stop,
                     shares=sizing.shares, day=self.cycles,
