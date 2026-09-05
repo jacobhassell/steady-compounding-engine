@@ -83,6 +83,15 @@ cycle, so a crash or preemption loses at most one cycle.
 
 ## 7. Update after a code change
 
+Use the one-command updater (pull, bootstrap, restart):
+
+```bash
+cd /opt/mastermind
+sudo bash deploy/update.sh
+```
+
+Or run the steps manually:
+
 ```bash
 cd /opt/mastermind
 sudo git pull
