@@ -76,12 +76,29 @@ sudo systemctl enable --now mastermind
 | Narrative journal | `/opt/mastermind/reports/journal.log` |
 | Paper state | `/opt/mastermind/.state/paper_state.json` |
 | Recent errors only | `journalctl -u mastermind -p err --since today` |
+| Trade history (CLI) | `sudo -u mastermind /opt/mastermind/.venv/bin/python -m project.main trades --limit 50` |
+| All fills (CSV) | `/opt/mastermind/reports/fills.csv` |
+| Closed trades (CSV) | `/opt/mastermind/reports/trades.csv` |
+| Raw events (JSONL) | `/opt/mastermind/reports/events.jsonl` |
 
 `paper_state.json` holds cash, realized PnL, open positions with their ladder
 stage, closed positions, and the last 200 journal lines. It is rewritten every
 cycle, so a crash or preemption loses at most one cycle.
 
+The `trades` command prints a summary of fills, closed round trips, win rate,
+and average R-multiple. Add `--verbose` to include the per-bar decision trail,
+or `--ticker <symbol>` to filter to one symbol.
+
 ## 7. Update after a code change
+
+Use the one-command updater (pull, bootstrap, restart):
+
+```bash
+cd /opt/mastermind
+sudo bash deploy/update.sh
+```
+
+Or run the steps manually:
 
 ```bash
 cd /opt/mastermind
